@@ -6,8 +6,8 @@
 /* This is the code I pulled directly from the book for the problem */
 typedef struct _rwlock_t { 
     sem_t lock; // binary semaphore (basic lock)
-    sem_t writelock; // allow ONE writer/MANY
-    readers int readers; // #readers in critical section
+    sem_t writelock; // allow ONE writer/MANY readers
+    int readers; // #readers in critical section
 } rwlock_t; void
 
 rwlock_init(rwlock_t *rw) {
@@ -18,8 +18,9 @@ rwlock_init(rwlock_t *rw) {
 
 void rwlock_acquire_readlock(rwlock_t *rw) {
     sem_wait(&rw->lock); rw->readers++;
-    if (rw->readers == 1) // first reader gets writelock
-    sem_wait(&rw->writelock);
+    if (rw->readers == 1){ // first reader gets writelock
+        sem_wait(&rw->writelock);
+    }
     sem_post(&rw->lock);
 }
 
@@ -40,7 +41,30 @@ void rwlock_release_writelock(rwlock_t *rw) {
     sem_post(&rw->writelock);
 }
 
-int main(){
+// This is what all the threads are going to be running
+void* criticalArea(void* vargp)
+{
+    printf("\n");
+    sleep(1);
+    printf("\n");
+    return NULL;
+}
+
+int main(char argc, char *argv[]){
+
+    if(argv[11] == NULL){
+        return -1;
+    } else {
+        for (i = 1; i <= 11; i++){
+            if(argv[i] == 1){
+                // Make writer
+            } else {
+                // Make reader
+            }
+        }
+    }
+
+    
     
     //accepts 10 arguments from the command line denoted as b1, b2, b3, b4, b5, b6, b7, b8, b9, b10
 
