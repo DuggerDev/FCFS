@@ -44,7 +44,7 @@ void rwlock_release_writelock(rwlock_t *rw) {
 
 // This is what all the threads are going to be running
 void* opperateWriter(int id){
-    rwlock_acquire_writelock(&rwlock);
+    rwlock_acquire_writelock(&rwlock_t);
     printf("Writer %d starts writing\n", id);
     sleep(1);
     printf("Writer %d ends writing\n", id);
@@ -52,7 +52,7 @@ void* opperateWriter(int id){
 }
 
 void* opperateReader(int id){
-    rwlock_acquire_writelock(&rwlock);
+    rwlock_acquire_writelock(&rwlock_t);
     printf("Reader %d starts writing\n", id);
     sleep(1);
     printf("Reader %d ends writing\n", id);
@@ -71,7 +71,7 @@ int main(char argc, char *argv[]){
         return -1;
     } else {
         //loop through the arguments and create the threads
-        for (i = 1; i <= 11; i++){
+        for (int i = 1; i <= 11; i++){
             //increment the current thread, we start at 0
             currentThread++;
             //if the argument is 0, create a reader thread (there are 4 parameters to pthread, according to stackoverflow the second parameter can be null pretty safely)
