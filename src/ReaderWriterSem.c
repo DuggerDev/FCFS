@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <pthread.h>
 #include <semaphore.h>
+#include <unistd.h>
 
 /* This is the code I pulled directly from the book for the problem */
 typedef struct _rwlock_t { 
@@ -50,22 +51,56 @@ void* criticalArea(void* vargp)
     return NULL;
 }
 
+void* opperateWriter(int id){
+    rwlock_acquire_writelock(&rwlock);
+    printf("Writer %d starts writing\n", id);
+    sleep(1);
+    printf("Writer %d ends writing\n", id);
+    rwlock_release_writelock(&rwlock);
+}
+
+void* opperateReader(int id){
+    rwlock_acquire_writelock(&rwlock);
+    printf("Reader %d starts writing\n", id);
+    sleep(1);
+    printf("Reader %d ends writing\n", id);
+    rwlock_release_writelock(&rwlock);
+}
+
 int main(char argc, char *argv[]){
+    //initialize some variables for the current thread for output and then up to 10 threads
+    int currentThread = 0;
+    //we need 10 threads
+    pthread_t threads[10];
+    //then initialize our lock object
+    rwlock_init(&rwlock);
 
     if(argv[11] == NULL){
         return -1;
     } else {
+        //loop through the arguments and create the threads
         for (i = 1; i <= 11; i++){
-            if(argv[i] == 1){
-                // Make writer
+            //increment the current thread, we start at 0
+            currentThread++;
+            //if the argument is 0, create a reader thread (there are 4 parameters to pthread, according to stackoverflow the second parameter can be null pretty safely)
+            if(argv[i] == 0){
+                pthread_create(&threads[currentThread], NULL, opperateReader(currentThread), NULL);
             } else {
-                // Make reader
+                //if the argument is 1, create a writer thread
+                pthread_create(&threads[currentThread], NULL, opperateWriter(currentThread), NULL);
             }
         }
     }
 
+    //now that we have all the threads, apparently we need to join them, because it waits for the threads to finish and then does some cleanup
+    for (i = 1; i <= 11; i++){
+        pthread_join(threads[i], NULL);
+    }
+
+    //now that they are all joined up, get out of dodge
+    return 0;
     
-    
+    //INSTRUCTION
     //accepts 10 arguments from the command line denoted as b1, b2, b3, b4, b5, b6, b7, b8, b9, b10
 
     //is either 0 or 1, o is reader, 1 is writer
