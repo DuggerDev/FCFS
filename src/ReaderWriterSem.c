@@ -65,7 +65,7 @@ int main(char argc, char *argv[]){
     //we need 10 threads
     pthread_t threads[10];
     //then initialize our lock object
-    rwlock_init(&rwlock);
+    rwlock_init(&rwlock_t);
 
     if(argv[11] == NULL){
         return -1;
