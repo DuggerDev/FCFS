@@ -17,6 +17,7 @@ rwlock_init(rwlock_t *rw) {
     sem_init(&rw->writelock, 0, 1);
 }
 
+
 void rwlock_acquire_readlock(rwlock_t *rw) {
     sem_wait(&rw->lock); rw->readers++;
     if (rw->readers == 1){ // first reader gets writelock
@@ -52,11 +53,11 @@ void* opperateWriter(int id, rwlock_t rwlock){
 }
 
 void* opperateReader(int id, rwlock_t rwlock){
-    rwlock_acquire_writelock(&rwlock);
+    rwlock_acquire_readlock(&rwlock);
     printf("Reader %d starts writing\n", id);
     sleep(1);
     printf("Reader %d ends writing\n", id);
-    rwlock_release_writelock(&rwlock);
+    rwlock_release_readlock(&rwlock);
 }
 
 int main(char argc, char *argv[]){
@@ -68,16 +69,17 @@ int main(char argc, char *argv[]){
     rwlock_t rwlock;
     rwlock_init(&rwlock);
 
-    if(argv[11] == NULL){
-        return -1;
+    //ensure we have 10 arguments for our 0 and 1s
+    if(argc != 11){
+        return 1;
     } else {
         //loop through the arguments and create the threads
 
-        for(int i = 1; i <= 11; i++){
+        for(int i = 1; i <= 10; i++){
             //increment the current thread, we start at 0
             currentThread++;
             //if the argument is 0, create a reader thread (there are 4 parameters to pthread, according to stackoverflow the second parameter can be null pretty safely)
-            if(argv[i] == 0){
+            if(atoi(argv[i]) == 0){
                 pthread_create(&threads[currentThread], NULL, opperateReader(currentThread, rwlock), NULL);
             } else {
                 //if the argument is 1, create a writer thread
@@ -87,7 +89,7 @@ int main(char argc, char *argv[]){
     }
 
     //now that we have all the threads, apparently we need to join them, because it waits for the threads to finish and then does some cleanup
-    for (int i = 1; i <= 11; i++){
+    for (int i = 1; i <= 10; i++){
         pthread_join(threads[i], NULL);
     }
 
