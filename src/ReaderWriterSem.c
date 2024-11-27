@@ -43,16 +43,16 @@ void rwlock_release_writelock(rwlock_t *rw) {
 }
 
 // This is what all the threads are going to be running
-void* opperateWriter(int id){
-    rwlock_acquire_writelock(&rwlock_t);
+void* opperateWriter(int id, rwlock_t rwlock){
+    rwlock_acquire_writelock(&rwlock);
     printf("Writer %d starts writing\n", id);
     sleep(1);
     printf("Writer %d ends writing\n", id);
     rwlock_release_writelock(&rwlock);
 }
 
-void* opperateReader(int id){
-    rwlock_acquire_writelock(&rwlock_t);
+void* opperateReader(int id, rwlock_t rwlock){
+    rwlock_acquire_writelock(&rwlock);
     printf("Reader %d starts writing\n", id);
     sleep(1);
     printf("Reader %d ends writing\n", id);
@@ -65,27 +65,29 @@ int main(char argc, char *argv[]){
     //we need 10 threads
     pthread_t threads[10];
     //then initialize our lock object
-    rwlock_init(&rwlock_t);
+    rwlock_t rwlock;
+    rwlock_init(&rwlock);
 
     if(argv[11] == NULL){
         return -1;
     } else {
         //loop through the arguments and create the threads
-        for (int i = 1; i <= 11; i++){
+
+        for(int i = 1; i <= 11; i++){
             //increment the current thread, we start at 0
             currentThread++;
             //if the argument is 0, create a reader thread (there are 4 parameters to pthread, according to stackoverflow the second parameter can be null pretty safely)
             if(argv[i] == 0){
-                pthread_create(&threads[currentThread], NULL, opperateReader(currentThread), NULL);
+                pthread_create(&threads[currentThread], NULL, opperateReader(currentThread, rwlock), NULL);
             } else {
                 //if the argument is 1, create a writer thread
-                pthread_create(&threads[currentThread], NULL, opperateWriter(currentThread), NULL);
+                pthread_create(&threads[currentThread], NULL, opperateWriter(currentThread, rwlock), NULL);
             }
         }
     }
 
     //now that we have all the threads, apparently we need to join them, because it waits for the threads to finish and then does some cleanup
-    for (i = 1; i <= 11; i++){
+    for (int i = 1; i <= 11; i++){
         pthread_join(threads[i], NULL);
     }
 
