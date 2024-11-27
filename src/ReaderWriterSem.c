@@ -9,7 +9,13 @@ typedef struct _rwlock_t {
     sem_t lock; // binary semaphore (basic lock)
     sem_t writelock; // allow ONE writer/MANY readers
     int readers; // #readers in critical section
-} rwlock_t; void
+} rwlock_t;
+
+typedef struct _threadArgs_t {
+    int id;
+    rwlock_t *rwlock;
+} threadArgs_t;
+
 
 rwlock_init(rwlock_t *rw) {
     rw->readers = 0;
@@ -44,20 +50,23 @@ void rwlock_release_writelock(rwlock_t *rw) {
 }
 
 // This is what all the threads are going to be running
-void* opperateWriter(int id, rwlock_t rwlock){
-    rwlock_acquire_writelock(&rwlock);
-    printf("Writer %d starts writing\n", id);
+void* opperateWriter(void* args){
+    threadArgs_t *threadArgs = (threadArgs_t *)args;
+    rwlock_acquire_writelock(threadArgs->rwlock);
+    printf("Writer %d starts writing\n", threadArgs->id);
     sleep(1);
-    printf("Writer %d ends writing\n", id);
-    rwlock_release_writelock(&rwlock);
+    printf("Writer %d ends writing\n", threadArgs->id);
+    rwlock_release_writelock(threadArgs->rwlock);
 }
 
-void* opperateReader(int id, rwlock_t rwlock){
-    rwlock_acquire_readlock(&rwlock);
-    printf("Reader %d starts reading\n", id);
+void* opperateReader(void* args){
+    //from the args assign it to type threadArgs
+    threadArgs_t *threadArgs = (threadArgs_t *)args;
+    rwlock_acquire_readlock(threadArgs->rwlock);
+    printf("Reader %d starts reading\n", threadArgs->id);
     sleep(1);
-    printf("Reader %d ends reading\n", id);
-    rwlock_release_readlock(&rwlock);
+    printf("Reader %d ends reading\n", threadArgs->id);
+    rwlock_release_readlock(threadArgs->rwlock);
 }
 
 int main(char argc, char *argv[]){
@@ -65,6 +74,8 @@ int main(char argc, char *argv[]){
     int currentThread = 0;
     //we need 10 threads
     pthread_t threads[10];
+    //then get our array of threadArgs
+    threadArgs_t *threadArgs[10];
     //then initialize our lock object
     rwlock_t rwlock;
     rwlock_init(&rwlock);
@@ -75,22 +86,28 @@ int main(char argc, char *argv[]){
     } else {
         //loop through the arguments and create the threads
 
-        for(int i = 1; i <= 10; i++){
+        for(int i = 0; i < 10; i++){
             //increment the current thread, we start at 0
-            currentThread++;
+            //now that weve incremented, assign the currentThread and rwlock to the threadArgs
+            //initialize the threadArgs
+            threadArgs[i] = malloc(sizeof(threadArgs_t)); //pain in the ass, apparently we have to do this
+            threadArgs[i]->id = i + 1; //tried doing i++ but that didnt work
+            threadArgs[i]->rwlock = &rwlock;
+
             //if the argument is 0, create a reader thread (there are 4 parameters to pthread, according to stackoverflow the second parameter can be null pretty safely)
-            if(atoi(argv[i]) == 0){
-                pthread_create(&threads[currentThread], NULL, opperateReader(currentThread, rwlock), NULL);
+            if(atoi(argv[i + 1]) == 0){
+                pthread_create(&threads[i], NULL, opperateReader, threadArgs[i]); //https://stackoverflow.com/questions/71348098/seg-fault-when-using-pthread-create apparently we cant just call some function, we have to pass it args
             } else {
                 //if the argument is 1, create a writer thread
-                pthread_create(&threads[currentThread], NULL, opperateWriter(currentThread, rwlock), NULL);
+                pthread_create(&threads[i], NULL, opperateWriter, threadArgs[i]);
             }
         }
     }
 
     //now that we have all the threads, apparently we need to join them, because it waits for the threads to finish and then does some cleanup
-    for (int i = 1; i <= 10; i++){
+    for (int i = 0; i < 10; i++){
         pthread_join(threads[i], NULL);
+        //free(threadArgs[i]); //maybe trying freeing it im not sure
     }
 
     //now that they are all joined up, get out of dodge
