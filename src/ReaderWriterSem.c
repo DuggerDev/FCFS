@@ -43,14 +43,6 @@ void rwlock_release_writelock(rwlock_t *rw) {
 }
 
 // This is what all the threads are going to be running
-void* criticalArea(void* vargp)
-{
-    printf("\n");
-    sleep(1);
-    printf("\n");
-    return NULL;
-}
-
 void* opperateWriter(int id){
     rwlock_acquire_writelock(&rwlock);
     printf("Writer %d starts writing\n", id);
