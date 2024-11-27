@@ -54,9 +54,9 @@ void* opperateWriter(int id, rwlock_t rwlock){
 
 void* opperateReader(int id, rwlock_t rwlock){
     rwlock_acquire_readlock(&rwlock);
-    printf("Reader %d starts writing\n", id);
+    printf("Reader %d starts reading\n", id);
     sleep(1);
-    printf("Reader %d ends writing\n", id);
+    printf("Reader %d ends reading\n", id);
     rwlock_release_readlock(&rwlock);
 }
 
