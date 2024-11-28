@@ -49,24 +49,29 @@ void rwlock_release_writelock(rwlock_t *rw) {
     sem_post(&rw->writelock);
 }
 
+sem_t queSystem; //we have to initialize this up here because otherwise the rest of the code doesnt see it, which was leading to issues
 // This is what all the threads are going to be running
 void* opperateWriter(void* args){
     threadArgs_t *threadArgs = (threadArgs_t *)args;
+    sem_wait(&queSystem); //ran into issues here so i had to folllow a similar patern to what we did with the readlocks
     rwlock_acquire_writelock(threadArgs->rwlock);
     printf("Writer %d starts writing\n", threadArgs->id);
     sleep(1);
     printf("Writer %d ends writing\n", threadArgs->id);
     rwlock_release_writelock(threadArgs->rwlock);
+    sem_post(&queSystem);
 }
 
 void* opperateReader(void* args){
     //from the args assign it to type threadArgs
     threadArgs_t *threadArgs = (threadArgs_t *)args;
+    sem_wait(&queSystem);
     rwlock_acquire_readlock(threadArgs->rwlock);
     printf("Reader %d starts reading\n", threadArgs->id);
     sleep(1);
     printf("Reader %d ends reading\n", threadArgs->id);
     rwlock_release_readlock(threadArgs->rwlock);
+    sem_post(&queSystem);
 }
 
 int main(char argc, char *argv[]){
@@ -79,10 +84,12 @@ int main(char argc, char *argv[]){
     //then initialize our lock object
     rwlock_t rwlock;
     rwlock_init(&rwlock);
+    sem_init(&queSystem, 0, 1);
 
     //ensure we have 10 arguments for our 0 and 1s
     if(argc != 11){
         return 1;
+    
     } else {
         //loop through the arguments and create the threads
 
